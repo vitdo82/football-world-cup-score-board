@@ -149,6 +149,40 @@ class WorldCupScoreBoardTest {
         }
     }
 
+    @Nested
+    @DisplayName("Scenario: Retrieving match summary")
+    class GetSummaryOfMatches {
+
+        @Test
+        @DisplayName("Given multiple matches, when the summary is retrieved, then it should return matches sorted by total score")
+        void givenMultipleMatches_whenSummaryRequested_thenMatchesSortedByTotalScore() throws ScoreBoardException {
+            // Given
+            worldCupScoreBoard.startMatch("Mexico", "Canada");
+            worldCupScoreBoard.updateMatchScore("Mexico", "Canada", 0, 5);
+
+            worldCupScoreBoard.startMatch("Spain", "Brazil");
+            worldCupScoreBoard.updateMatchScore("Spain", "Brazil", 10, 2);
+
+            worldCupScoreBoard.startMatch("Germany", "France");
+            worldCupScoreBoard.updateMatchScore("Germany", "France", 2, 2);
+
+            worldCupScoreBoard.startMatch("Uruguay", "Italy");
+            worldCupScoreBoard.updateMatchScore("Uruguay", "Italy", 6, 6);
+
+            worldCupScoreBoard.startMatch("Argentina", "Australia");
+            worldCupScoreBoard.updateMatchScore("Argentina", "Australia", 3, 1);
+            // When
+            List<Match> matchSummary = worldCupScoreBoard.getSummary();
+            // Then
+            assertThat(matchSummary).hasSize(5);
+            assertMatchDetails(matchSummary.get(0), "Uruguay", "Italy", 6, 6);
+            assertMatchDetails(matchSummary.get(1), "Spain", "Brazil", 10, 2);
+            assertMatchDetails(matchSummary.get(2), "Mexico", "Canada", 0, 5);
+            assertMatchDetails(matchSummary.get(3), "Argentina", "Australia", 3, 1);
+            assertMatchDetails(matchSummary.get(4), "Germany", "France", 2, 2);
+        }
+    }
+
     /**
      * Asserts the match details
      *

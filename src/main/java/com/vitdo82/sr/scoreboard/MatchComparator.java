@@ -19,10 +19,18 @@ public class MatchComparator implements Comparator<Match> {
      */
     @Override
     public int compare(Match m1, Match m2) {
+        // if both matches have the same homeTeam and awayTeam they are identical
         if (m1.awayTeam().equals(m2.awayTeam()) && m1.homeTeam().equals(m2.homeTeam())) {
             return 0;
         }
 
+        // compare total scores (homeScore + awayScore) in descending order
+        int totalScoreCompare = Integer.compare(m2.awayScore() + m2.homeScore(), m1.awayScore() + m1.homeScore());
+        if (totalScoreCompare != 0) {
+            return totalScoreCompare;
+        }
+
+        // if total scores the same, compare by start time in descending order
         return m2.startTime().compareTo(m1.startTime());
     }
 }
