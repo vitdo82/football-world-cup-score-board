@@ -8,4 +8,8 @@ public record Match(
         int homeScore,
         int awayScore,
         LocalDateTime startTime
-) {}
+) {
+    public Match updateScore(int homeScore, int awayScore) {
+        return new Match(this.homeTeam, this.awayTeam, homeScore, awayScore, this.startTime);
+    }
+}

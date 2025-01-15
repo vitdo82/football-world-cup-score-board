@@ -32,10 +32,8 @@ class WorldCupScoreBoardTest {
             // Given
             String homeTeam = "Mexico";
             String awayTeam = "Canada";
-
             // When
             worldCupScoreBoard.startMatch(homeTeam, awayTeam);
-
             // Then
             assertThat(worldCupScoreBoard.getSummary())
                     .hasSize(1)
@@ -48,10 +46,8 @@ class WorldCupScoreBoardTest {
         void givenTeams_whenStarted_thenMatchAddedToTheBoardInOrder() throws ScoreBoardException {
             // Given
             worldCupScoreBoard.startMatch("Spain", "Brazil");
-
             // When
             worldCupScoreBoard.startMatch("Uruguay", "Italy");
-
             // Then
             List<Match> matchSummary = worldCupScoreBoard.getSummary();
             assertThat(matchSummary).hasSize(2);
@@ -69,10 +65,8 @@ class WorldCupScoreBoardTest {
             String homeTeam = "Mexico";
             String awayTeam = "Canada";
             worldCupScoreBoard.startMatch(homeTeam, awayTeam);
-
             // When
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
-
             // Then
             assertThat(exception.getMessage()).isEqualTo("Match already exists");
         }
@@ -83,10 +77,8 @@ class WorldCupScoreBoardTest {
             // Given
             String homeTeam = "";
             String awayTeam = "Brazil";
-
             // When
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
-
             // Then
             assertThat(exception.getMessage()).isEqualTo("Home team name must not be null or empty");
         }
@@ -97,12 +89,63 @@ class WorldCupScoreBoardTest {
             // Given
             String homeTeam = "Brazil";
             String awayTeam = "";
-
             // When
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
-
             // Then
             assertThat(exception.getMessage()).isEqualTo("Away team name must not be null or empty");
+        }
+    }
+
+    @Nested
+    @DisplayName("Scenario: Updating match score")
+    class UpdateScore {
+
+        @Test
+        @DisplayName("Given a match, when the score is updated, then the updated score should be displayed correctly")
+        void givenMatch_whenScoreUpdated_thenScoreDisplayedCorrectly() throws ScoreBoardException {
+            // Given
+            worldCupScoreBoard.startMatch("Mexico", "Canada");
+            // When
+            worldCupScoreBoard.updateMatchScore("Mexico", "Canada", 1, 2);
+            // Then
+            List<Match> matchSummary = worldCupScoreBoard.getSummary();
+            assertThat(matchSummary)
+                    .hasSize(1)
+                    .first()
+                    .satisfies(match -> assertMatchDetails(match, "Mexico", "Canada", 1, 2));
+        }
+
+        @Test
+        @DisplayName("Given a not started match, when the score is updated, then an not found exception should be raised")
+        void givenNotStartedMatch_whenScoreUpdated_thenScoreDisplayedCorrectly() throws ScoreBoardException {
+            // Given
+            worldCupScoreBoard.startMatch("Mexico", "Canada");
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.updateMatchScore("Mexico", "Brazil", 2, 2));
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("No match found for Mexico and Brazil");
+        }
+
+        @Test
+        @DisplayName("Given a match, when the home team score is updated to a negative value, then an exception should be raised")
+        void givenMatchAndNewNegativeHomeScore_whenScoreUpdated_thenRaiseException() throws ScoreBoardException {
+            // Given
+            worldCupScoreBoard.startMatch("Mexico", "Canada");
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.updateMatchScore("Mexico", "Canada", -1, 2));
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("Home score must not be negative");
+        }
+
+        @Test
+        @DisplayName("Given a match, when the away team score is updated to a negative value, then an exception should be raised")
+        void givenMatchAndNewNegativeAwayScore_whenScoreUpdated_thenRaiseException() throws ScoreBoardException {
+            // Given
+            worldCupScoreBoard.startMatch("Mexico", "Canada");
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.updateMatchScore("Mexico", "Canada", 0, -1));
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("Away score must not be negative");
         }
     }
 

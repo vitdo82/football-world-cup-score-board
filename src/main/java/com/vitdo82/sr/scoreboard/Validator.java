@@ -17,4 +17,17 @@ public class Validator {
             throw new ScoreBoardException("%s name must not be null or empty".formatted(fieldName));
         }
     }
+
+    /**
+     * Validates that the provided score is not negative
+     *
+     * @param score     the value to validate
+     * @param fieldName the name of the field being validated
+     * @throws ScoreBoardException an exception will be thrown with a message indicating which field is invalid
+     */
+    public void validateNonNegative(int score, String fieldName) throws ScoreBoardException {
+        if (score < 0) {
+            throw new ScoreBoardException("%s must not be negative".formatted(fieldName));
+        }
+    }
 }
