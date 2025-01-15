@@ -61,6 +61,20 @@ public class WorldCupScoreBoard {
     }
 
     /**
+     * Finishes a match by removing it from the score board
+     *
+     * @param homeTeam the name of the home team
+     * @param awayTeam the name of the away team
+     * @throws ScoreBoardException if no match is found for the given teams
+     */
+    public void finishMatch(String homeTeam, String awayTeam) throws ScoreBoardException {
+        validator.validateNonEmpty(homeTeam, "Home team");
+        validator.validateNonEmpty(awayTeam, "Away team");
+
+        matches.remove(findMatch(homeTeam, awayTeam));
+    }
+
+    /**
      * Finds a match by the home and away team names
      *
      * @param homeTeam the name of the home team

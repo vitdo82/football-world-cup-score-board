@@ -183,6 +183,48 @@ class WorldCupScoreBoardTest {
         }
     }
 
+    @Nested
+    @DisplayName("Scenario: Finishing a match")
+    class FinishMatch {
+
+        @Test
+        @DisplayName("Given a match, when finishing the match, then the scoreboard should be empty")
+        void givenMatchActive_whenFinishingMatch_thenScoreboardShouldBeEmpty() throws ScoreBoardException {
+            // Given
+            String homeTeam = "Mexico";
+            String awayTeam = "Canada";
+            worldCupScoreBoard.startMatch(homeTeam, awayTeam);
+            // When
+            worldCupScoreBoard.finishMatch(homeTeam, awayTeam);
+            // Then
+            assertThat(worldCupScoreBoard.getSummary()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Given an empty home team name, when finishing the match, then an exception should be raised")
+        void givenEmptyHomeTeamName_whenFinishMatchMatch_thenRaiseException() {
+            // Given
+            String homeTeam = "";
+            String awayTeam = "Brazil";
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.finishMatch(homeTeam, awayTeam));
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("Home team name must not be null or empty");
+        }
+
+        @Test
+        @DisplayName("Given an empty away team name, when finishing the match, then an exception should be raised")
+        void givenEmptyAwayName_whenFinishMatchMatch_thenRaiseException() {
+            // Given
+            String homeTeam = "Brazil";
+            String awayTeam = "";
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.finishMatch(homeTeam, awayTeam));
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("Away team name must not be null or empty");
+        }
+    }
+
     /**
      * Asserts the match details
      *
