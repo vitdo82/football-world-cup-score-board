@@ -1,5 +1,8 @@
-package com.vitdo82.sr.scoreboard;
+package com.vitdo82.sr.scoreboard.worldcup;
 
+import com.vitdo82.sr.scoreboard.ScoreBoard;
+import com.vitdo82.sr.scoreboard.ScoreBoardException;
+import com.vitdo82.sr.scoreboard.ScoreBoardFactory;
 import com.vitdo82.sr.scoreboard.models.Match;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@DisplayName("World Cup Score Board")
-class WorldCupScoreBoardTest {
+@DisplayName("Football World Cup Score Board")
+class FootballWorldCupScoreBoardTest {
 
-    private WorldCupScoreBoard worldCupScoreBoard;
+    private ScoreBoard worldCupScoreBoard;
 
     @BeforeEach
     void setupBefore() {
-        this.worldCupScoreBoard = new WorldCupScoreBoard();
+        this.worldCupScoreBoard = ScoreBoardFactory.createFootbalWorldCupScoreBoard();
     }
 
     @Nested
@@ -38,7 +41,7 @@ class WorldCupScoreBoardTest {
             // When
             worldCupScoreBoard.startMatch(homeTeam, awayTeam);
             // Then
-            assertThat(worldCupScoreBoard.getSummary())
+            assertThat(worldCupScoreBoard.getSummaryMatches())
                     .hasSize(1)
                     .first()
                     .satisfies(match -> assertMatchDetails(match, homeTeam, awayTeam, 0, 0));
@@ -52,7 +55,7 @@ class WorldCupScoreBoardTest {
             // When
             worldCupScoreBoard.startMatch("Uruguay", "Italy");
             // Then
-            List<Match> matchSummary = worldCupScoreBoard.getSummary();
+            List<Match> matchSummary = worldCupScoreBoard.getSummaryMatches();
             assertThat(matchSummary).hasSize(2);
 
             assertThat(matchSummary).isSortedAccordingTo(Comparator.comparing(Match::startTime).reversed());
@@ -113,7 +116,7 @@ class WorldCupScoreBoardTest {
             // When
             worldCupScoreBoard.updateMatchScore("Mexico", "Canada", 1, 2);
             // Then
-            List<Match> matchSummary = worldCupScoreBoard.getSummary();
+            List<Match> matchSummary = worldCupScoreBoard.getSummaryMatches();
             assertThat(matchSummary)
                     .hasSize(1)
                     .first()
@@ -177,7 +180,7 @@ class WorldCupScoreBoardTest {
             worldCupScoreBoard.startMatch("Argentina", "Australia");
             worldCupScoreBoard.updateMatchScore("Argentina", "Australia", 3, 1);
             // When
-            List<Match> matchSummary = worldCupScoreBoard.getSummary();
+            List<Match> matchSummary = worldCupScoreBoard.getSummaryMatches();
             // Then
             assertThat(matchSummary).hasSize(5);
             assertMatchDetails(matchSummary.get(0), "Uruguay", "Italy", 6, 6);
@@ -202,7 +205,7 @@ class WorldCupScoreBoardTest {
             // When
             worldCupScoreBoard.finishMatch(homeTeam, awayTeam);
             // Then
-            assertThat(worldCupScoreBoard.getSummary()).isEmpty();
+            assertThat(worldCupScoreBoard.getSummaryMatches()).isEmpty();
         }
 
         @Test

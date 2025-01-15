@@ -1,4 +1,6 @@
-package com.vitdo82.sr.scoreboard;
+package com.vitdo82.sr.scoreboard.worldcup;
+
+import com.vitdo82.sr.scoreboard.ScoreBoardException;
 
 /**
  * Utility class provide validation operations on input data

@@ -1,4 +1,4 @@
-package com.vitdo82.sr.scoreboard;
+package com.vitdo82.sr.scoreboard.worldcup;
 
 import com.vitdo82.sr.scoreboard.models.Match;
 
