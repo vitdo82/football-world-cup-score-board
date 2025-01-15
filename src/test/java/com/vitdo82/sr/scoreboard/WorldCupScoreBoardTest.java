@@ -1,9 +1,13 @@
 package com.vitdo82.sr.scoreboard;
 
+import com.vitdo82.sr.scoreboard.models.Match;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.Comparator;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,12 +22,12 @@ class WorldCupScoreBoardTest {
     }
 
     @Nested
-    @DisplayName("when start a new match")
+    @DisplayName("Scenario: Starting new matches")
     class WhenNew {
 
         @Test
-        @DisplayName("successfully start a new match")
-        void successfullyStartNewMatchTest() {
+        @DisplayName("Given two teams, when a new match is started, then it should be added to the board")
+        void givenTeams_whenStarted_thenMatchAddedToTheBoard() {
             // Given
             String homeTeam = "Mexico";
             String awayTeam = "Canada";
@@ -35,13 +39,42 @@ class WorldCupScoreBoardTest {
             assertThat(worldCupScoreBoard.getSummary())
                     .hasSize(1)
                     .first()
-                    .satisfies(match -> {
-                        assertThat(match.homeTeam()).isEqualTo(homeTeam);
-                        assertThat(match.homeScore()).isEqualTo(0);
-
-                        assertThat(match.awayTeam()).isEqualTo(awayTeam);
-                        assertThat(match.awayScore()).isEqualTo(0);
-                    });
+                    .satisfies(match -> assertMatchDetails(match, homeTeam, awayTeam, 0, 0));
         }
+
+        @Test
+        @DisplayName("Given multiple teams, when 2 matches are started, then all matches should be added to the board in order by start time")
+        void givenTeams_whenStarted_thenMatchAddedToTheBoardInOrder() {
+            // Given
+            worldCupScoreBoard.startMatch("Spain", "Brazil");
+
+            // When
+            worldCupScoreBoard.startMatch("Uruguay", "Italy");
+
+            // Then
+            List<Match> matchSummary = worldCupScoreBoard.getSummary();
+            assertThat(matchSummary).hasSize(2);
+
+            assertThat(matchSummary).isSortedAccordingTo(Comparator.comparing(Match::startTime).reversed());
+
+            assertMatchDetails(matchSummary.get(0), "Uruguay", "Italy", 0, 0);
+            assertMatchDetails(matchSummary.get(1), "Spain", "Brazil", 0, 0);
+        }
+    }
+
+    /**
+     * Asserts the match details
+     *
+     * @param match             object to verify
+     * @param expectedHomeTeam  the expected name of the home team
+     * @param expectedAwayTeam  the expected name of the away team
+     * @param expectedHomeScore the expected score of the home team
+     * @param expectedAwayScore the expected score of the away team
+     */
+    private void assertMatchDetails(Match match, String expectedHomeTeam, String expectedAwayTeam, int expectedHomeScore, int expectedAwayScore) {
+        assertThat(match.homeTeam()).isEqualTo(expectedHomeTeam);
+        assertThat(match.awayTeam()).isEqualTo(expectedAwayTeam);
+        assertThat(match.homeScore()).isEqualTo(expectedHomeScore);
+        assertThat(match.awayScore()).isEqualTo(expectedAwayScore);
     }
 }
