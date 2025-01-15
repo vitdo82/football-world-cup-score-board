@@ -73,7 +73,7 @@ class WorldCupScoreBoardTest {
 
         @Test
         @DisplayName("Given an empty home team name, when starting the match, then an exception should be raised")
-        void givenEmptyHomeTeamName_whenStartingMatch_thenRaiseException() throws ScoreBoardException {
+        void givenEmptyHomeTeamName_whenStartingMatch_thenRaiseException() {
             // Given
             String homeTeam = "";
             String awayTeam = "Brazil";
@@ -85,7 +85,7 @@ class WorldCupScoreBoardTest {
 
         @Test
         @DisplayName("Given an empty away team name, when starting the match, then an exception should be raised")
-        void givenEmptyAwayName_whenStartingMatch_thenRaiseException() throws ScoreBoardException {
+        void givenEmptyAwayName_whenStartingMatch_thenRaiseException() {
             // Given
             String homeTeam = "Brazil";
             String awayTeam = "";
