@@ -5,6 +5,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 
 import java.util.Comparator;
 import java.util.List;
@@ -71,11 +74,12 @@ class WorldCupScoreBoardTest {
             assertThat(exception.getMessage()).isEqualTo("Match already exists");
         }
 
-        @Test
-        @DisplayName("Given an empty home team name, when starting the match, then an exception should be raised")
-        void givenEmptyHomeTeamName_whenStartingMatch_thenRaiseException() {
+        @NullSource
+        @EmptySource
+        @ParameterizedTest(name = "{index} => home team=''{0}''")
+        @DisplayName("Given an empty/null home team name, when starting the match, then an exception should be raised")
+        void givenEmptyHomeTeamName_whenStartingMatch_thenRaiseException(String homeTeam) {
             // Given
-            String homeTeam = "";
             String awayTeam = "Brazil";
             // When
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
@@ -83,12 +87,13 @@ class WorldCupScoreBoardTest {
             assertThat(exception.getMessage()).isEqualTo("Home team name must not be null or empty");
         }
 
-        @Test
+        @NullSource
+        @EmptySource
+        @ParameterizedTest(name = "{index} => away team=''{0}''")
         @DisplayName("Given an empty away team name, when starting the match, then an exception should be raised")
-        void givenEmptyAwayName_whenStartingMatch_thenRaiseException() {
+        void givenEmptyAwayName_whenStartingMatch_thenRaiseException(String awayTeam) {
             // Given
             String homeTeam = "Brazil";
-            String awayTeam = "";
             // When
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
             // Then
@@ -200,11 +205,12 @@ class WorldCupScoreBoardTest {
             assertThat(worldCupScoreBoard.getSummary()).isEmpty();
         }
 
-        @Test
-        @DisplayName("Given an empty home team name, when finishing the match, then an exception should be raised")
-        void givenEmptyHomeTeamName_whenFinishMatchMatch_thenRaiseException() {
+        @NullSource
+        @EmptySource
+        @ParameterizedTest(name = "{index} => home team=''{0}''")
+        @DisplayName("Given an empty/null home team name, when finishing the match, then an exception should be raised")
+        void givenEmptyHomeTeamName_whenFinishMatchMatch_thenRaiseException(String homeTeam) {
             // Given
-            String homeTeam = "";
             String awayTeam = "Brazil";
             // When
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.finishMatch(homeTeam, awayTeam));
@@ -212,12 +218,13 @@ class WorldCupScoreBoardTest {
             assertThat(exception.getMessage()).isEqualTo("Home team name must not be null or empty");
         }
 
-        @Test
-        @DisplayName("Given an empty away team name, when finishing the match, then an exception should be raised")
-        void givenEmptyAwayName_whenFinishMatchMatch_thenRaiseException() {
+        @NullSource
+        @EmptySource
+        @ParameterizedTest(name = "{index} => away team=''{0}''")
+        @DisplayName("Given an empty/null away team name, when finishing the match, then an exception should be raised")
+        void givenEmptyAwayName_whenFinishMatchMatch_thenRaiseException(String awayTeam) {
             // Given
             String homeTeam = "Brazil";
-            String awayTeam = "";
             // When
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.finishMatch(homeTeam, awayTeam));
             // Then
