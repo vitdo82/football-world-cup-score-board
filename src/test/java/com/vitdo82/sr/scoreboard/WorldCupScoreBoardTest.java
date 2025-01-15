@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DisplayName("World Cup Score Board")
 class WorldCupScoreBoardTest {
@@ -27,7 +28,7 @@ class WorldCupScoreBoardTest {
 
         @Test
         @DisplayName("Given two teams, when a new match is started, then it should be added to the board")
-        void givenTeams_whenStarted_thenMatchAddedToTheBoard() {
+        void givenTeams_whenStarted_thenMatchAddedToTheBoard() throws ScoreBoardException {
             // Given
             String homeTeam = "Mexico";
             String awayTeam = "Canada";
@@ -44,7 +45,7 @@ class WorldCupScoreBoardTest {
 
         @Test
         @DisplayName("Given multiple teams, when 2 matches are started, then all matches should be added to the board in order by start time")
-        void givenTeams_whenStarted_thenMatchAddedToTheBoardInOrder() {
+        void givenTeams_whenStarted_thenMatchAddedToTheBoardInOrder() throws ScoreBoardException {
             // Given
             worldCupScoreBoard.startMatch("Spain", "Brazil");
 
@@ -59,6 +60,49 @@ class WorldCupScoreBoardTest {
 
             assertMatchDetails(matchSummary.get(0), "Uruguay", "Italy", 0, 0);
             assertMatchDetails(matchSummary.get(1), "Spain", "Brazil", 0, 0);
+        }
+
+        @Test
+        @DisplayName("Given a match, when starting the same match again, then an error should state the match already exists")
+        void givenMatch_whenStartingDuplicateMatch_thenErrorOccurs() throws ScoreBoardException {
+            // Given
+            String homeTeam = "Mexico";
+            String awayTeam = "Canada";
+            worldCupScoreBoard.startMatch(homeTeam, awayTeam);
+
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
+
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("Match already exists");
+        }
+
+        @Test
+        @DisplayName("Given an empty home team name, when starting the match, then an exception should be raised")
+        void givenEmptyHomeTeamName_whenStartingMatch_thenRaiseException() throws ScoreBoardException {
+            // Given
+            String homeTeam = "";
+            String awayTeam = "Brazil";
+
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
+
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("Home team name must not be null or empty");
+        }
+
+        @Test
+        @DisplayName("Given an empty away team name, when starting the match, then an exception should be raised")
+        void givenEmptyAwayName_whenStartingMatch_thenRaiseException() throws ScoreBoardException {
+            // Given
+            String homeTeam = "Brazil";
+            String awayTeam = "";
+
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
+
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("Away team name must not be null or empty");
         }
     }
 
