@@ -205,11 +205,22 @@ class WorldCupScoreBoardTest {
             assertThat(worldCupScoreBoard.getSummary()).isEmpty();
         }
 
+        @Test
+        @DisplayName("Given a match, when finishing a not existing match, then an exception should be raised")
+        void givenMatchActive_whenFinishNotExistentMatch_thenRaiseException() throws ScoreBoardException {
+            // Given
+            worldCupScoreBoard.startMatch("Mexico", "Brazil");
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.finishMatch("Mexico", "Canada"));
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("No match found for Mexico and Canada");
+        }
+
         @NullSource
         @EmptySource
         @ParameterizedTest(name = "{index} => home team=''{0}''")
         @DisplayName("Given an empty/null home team name, when finishing the match, then an exception should be raised")
-        void givenEmptyHomeTeamName_whenFinishMatchMatch_thenRaiseException(String homeTeam) {
+        void givenEmptyHomeTeamName_whenFinishMatch_thenRaiseException(String homeTeam) {
             // Given
             String awayTeam = "Brazil";
             // When
@@ -222,7 +233,7 @@ class WorldCupScoreBoardTest {
         @EmptySource
         @ParameterizedTest(name = "{index} => away team=''{0}''")
         @DisplayName("Given an empty/null away team name, when finishing the match, then an exception should be raised")
-        void givenEmptyAwayName_whenFinishMatchMatch_thenRaiseException(String awayTeam) {
+        void givenEmptyAwayName_whenFinishMatch_thenRaiseException(String awayTeam) {
             // Given
             String homeTeam = "Brazil";
             // When
