@@ -6,7 +6,8 @@ import com.vitdo82.sr.scoreboard.models.Match;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.TreeSet;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class FootballWorldCupScoreBoard implements ScoreBoard {
 
@@ -14,7 +15,7 @@ public class FootballWorldCupScoreBoard implements ScoreBoard {
     private final Validator validator;
 
     public FootballWorldCupScoreBoard() {
-        this.matches = new TreeSet<>(new MatchComparator());
+        this.matches = new ConcurrentSkipListSet<>(new MatchComparator());
         this.validator = new Validator();
     }
 
@@ -25,14 +26,14 @@ public class FootballWorldCupScoreBoard implements ScoreBoard {
      * @param homeTeam the name of the home team
      * @param awayTeam the name of the away team
      * @throws ScoreBoardException if a match with the same home&away teams already exists on the score board
+     *                             or if the team names are invalid
      */
     @Override
     public void startMatch(String homeTeam, String awayTeam) throws ScoreBoardException {
         validator.validateNonEmpty(homeTeam, "Home team");
         validator.validateNonEmpty(awayTeam, "Away team");
 
-        Match match = new Match(homeTeam, awayTeam);
-
+        final Match match = new Match(homeTeam, awayTeam);
         if (!matches.add(match)) {
             throw new ScoreBoardException("One or both teams are already participating in another match");
         }
@@ -62,25 +63,29 @@ public class FootballWorldCupScoreBoard implements ScoreBoard {
         validator.validateNonNegative(homeScore, "Home score");
         validator.validateNonNegative(awayScore, "Away score");
 
-        Match match = findMatch(homeTeam, awayTeam);
-
-        matches.remove(match);
-        matches.add(match.updateScore(homeScore, awayScore));
+        synchronized (matches) {
+            Match match = findMatch(homeTeam, awayTeam)
+                    .orElseThrow(() -> new ScoreBoardException("No match found for %s and %s".formatted(homeTeam, awayTeam)));
+            matches.remove(match);
+            matches.add(match.updateScore(homeScore, awayScore));
+        }
     }
 
     /**
      * Finishes a match by removing it from the score board
+     * If no match is found, the method silently does nothing
      *
      * @param homeTeam the name of the home team
      * @param awayTeam the name of the away team
-     * @throws ScoreBoardException if no match is found for the given teams
+     * @throws ScoreBoardException if any of the team names are invalid
      */
     @Override
     public void finishMatch(String homeTeam, String awayTeam) throws ScoreBoardException {
         validator.validateNonEmpty(homeTeam, "Home team");
         validator.validateNonEmpty(awayTeam, "Away team");
 
-        matches.remove(findMatch(homeTeam, awayTeam));
+        Optional<Match> matchOptional = findMatch(homeTeam, awayTeam);
+        matchOptional.ifPresent(matches::remove);
     }
 
     /**
@@ -89,12 +94,10 @@ public class FootballWorldCupScoreBoard implements ScoreBoard {
      * @param homeTeam the name of the home team
      * @param awayTeam the name of the away team
      * @return the {@link Match}
-     * @throws ScoreBoardException if no match is found for the given teams
      */
-    private Match findMatch(String homeTeam, String awayTeam) throws ScoreBoardException {
+    private Optional<Match> findMatch(String homeTeam, String awayTeam) {
         return matches.stream()
                 .filter(m -> m.homeTeam().equals(homeTeam) && m.awayTeam().equals(awayTeam))
-                .findFirst()
-                .orElseThrow(() -> new ScoreBoardException("No match found for %s and %s".formatted(homeTeam, awayTeam)));
+                .findFirst();
     }
 }

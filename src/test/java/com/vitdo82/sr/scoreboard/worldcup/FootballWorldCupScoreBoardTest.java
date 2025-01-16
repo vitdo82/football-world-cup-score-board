@@ -4,6 +4,7 @@ import com.vitdo82.sr.scoreboard.ScoreBoard;
 import com.vitdo82.sr.scoreboard.ScoreBoardException;
 import com.vitdo82.sr.scoreboard.ScoreBoardFactory;
 import com.vitdo82.sr.scoreboard.models.Match;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,6 +15,10 @@ import org.junit.jupiter.params.provider.NullSource;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -41,10 +46,7 @@ class FootballWorldCupScoreBoardTest {
             // When
             worldCupScoreBoard.startMatch(homeTeam, awayTeam);
             // Then
-            assertThat(worldCupScoreBoard.getSummaryMatches())
-                    .hasSize(1)
-                    .first()
-                    .satisfies(match -> assertMatchDetails(match, homeTeam, awayTeam, 0, 0));
+            assertThat(worldCupScoreBoard.getSummaryMatches()).hasSize(1).first().satisfies(match -> assertMatchDetails(match, homeTeam, awayTeam, 0, 0));
         }
 
         @Test
@@ -113,6 +115,35 @@ class FootballWorldCupScoreBoardTest {
             // Then
             assertThat(exception.getMessage()).isEqualTo("Away team name must not be null or empty");
         }
+
+        @Test
+        @DisplayName("Given team names, when multiple matches are started in parallel, then all matches should be added to the board")
+        void givenTeamNames_whenMultipleMatchStarted_thenMatchAddedToTheBoard() throws InterruptedException {
+            // Given
+            final String homeTeam = "Mexico";
+            final String awayTeam = "Brazil";
+            int numberOfMatches = 1000;
+
+            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                CountDownLatch latch = new CountDownLatch(numberOfMatches);
+
+                // When
+                IntStream.range(1, numberOfMatches + 1).forEach(index -> executor.submit(() -> {
+                    try {
+                        worldCupScoreBoard.startMatch(homeTeam + index, awayTeam + (index * 10000));
+                    } catch (ScoreBoardException e) {
+                        Assertions.fail("Start match failed: %s", e.getMessage());
+                    } finally {
+                        latch.countDown();
+                    }
+                }));
+                latch.await();
+                executor.shutdown();
+            }
+
+            // Then
+            assertThat(worldCupScoreBoard.getSummaryMatches()).hasSize(numberOfMatches);
+        }
     }
 
     @Nested
@@ -128,10 +159,7 @@ class FootballWorldCupScoreBoardTest {
             worldCupScoreBoard.updateMatchScore("Mexico", "Canada", 1, 2);
             // Then
             List<Match> matchSummary = worldCupScoreBoard.getSummaryMatches();
-            assertThat(matchSummary)
-                    .hasSize(1)
-                    .first()
-                    .satisfies(match -> assertMatchDetails(match, "Mexico", "Canada", 1, 2));
+            assertThat(matchSummary).hasSize(1).first().satisfies(match -> assertMatchDetails(match, "Mexico", "Canada", 1, 2));
         }
 
         @Test
@@ -165,6 +193,67 @@ class FootballWorldCupScoreBoardTest {
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.updateMatchScore("Mexico", "Canada", 0, -1));
             // Then
             assertThat(exception.getMessage()).isEqualTo("Away score must not be negative");
+        }
+
+        @Test
+        @DisplayName("Given a list of matches, when the scores are updated and finished, then all matches should be deleted from the board")
+        void givenListMatches_whenScoreUpdatedFinished_thenMatchesDeletedFromTheBoard() throws InterruptedException {
+
+            // Given
+            final String homeTeam = "Mexico";
+            final String awayTeam = "Brazil";
+            final int uniqIndex = 10000;
+            int numberOfStartMatches = 100;
+
+            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                CountDownLatch latch = new CountDownLatch(numberOfStartMatches);
+                IntStream.range(1, numberOfStartMatches + 1).forEach(index -> executor.submit(() -> {
+                    try {
+                        worldCupScoreBoard.startMatch(homeTeam + index, awayTeam + (index * uniqIndex));
+                    } catch (ScoreBoardException e) {
+                        Assertions.fail("Start match failed: %s", e.getMessage());
+                    } finally {
+                        latch.countDown();
+                    }
+                }));
+                latch.await();
+            }
+
+            // When
+            final int numThreads = 50;
+            CountDownLatch latch = new CountDownLatch(numThreads * (numberOfStartMatches * 2));
+            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                for (int i = 0; i < numThreads; i++) {
+                    final int homeScore = i;  // Each thread sets a different score
+                    final int awayScore = i + 1;  // Away score is home score + 1
+                    IntStream.range(1, numberOfStartMatches + 1).forEach(index -> {
+                        final String homeTeamName = homeTeam + index;
+                        final String awayTeamName = awayTeam + (index * uniqIndex);
+                        executor.submit(() -> {
+                            try {
+                                worldCupScoreBoard.updateMatchScore(homeTeamName, awayTeamName, homeScore, awayScore);
+                            } catch (ScoreBoardException e) {
+                                Assertions.fail("Update match score failed: %s", e.getMessage());
+                            } finally {
+                                latch.countDown();
+                            }
+                        });
+                        executor.submit(() -> {
+                            try {
+                                worldCupScoreBoard.finishMatch(homeTeamName, awayTeamName);
+                            } catch (ScoreBoardException e) {
+                                Assertions.fail("Finish match failed: %s", e.getMessage());
+                            } finally {
+                                latch.countDown();
+                            }
+                        });
+                    });
+                }
+                latch.await();
+            }
+
+            // Then
+            assertThat(worldCupScoreBoard.getSummaryMatches()).isEmpty();
         }
     }
 
@@ -220,14 +309,16 @@ class FootballWorldCupScoreBoardTest {
         }
 
         @Test
-        @DisplayName("Given a match, when finishing a not existing match, then an exception should be raised")
-        void givenMatchActive_whenFinishNotExistentMatch_thenRaiseException() throws ScoreBoardException {
+        @DisplayName("Given a match, when finishing a not existing match, then no changes occur")
+        void givenMatchActive_whenFinishNotExistentMatch_thenNoChangesOccur() throws ScoreBoardException {
             // Given
             worldCupScoreBoard.startMatch("Mexico", "Brazil");
             // When
-            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.finishMatch("Mexico", "Canada"));
+            worldCupScoreBoard.finishMatch("Mexico", "Canada");
             // Then
-            assertThat(exception.getMessage()).isEqualTo("No match found for Mexico and Canada");
+            List<Match> matchSummary = worldCupScoreBoard.getSummaryMatches();
+            assertThat(matchSummary).hasSize(1).first().satisfies(match -> assertMatchDetails(match, "Mexico", "Brazil", 0, 0));
+
         }
 
         @NullSource
@@ -254,6 +345,51 @@ class FootballWorldCupScoreBoardTest {
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.finishMatch(homeTeam, awayTeam));
             // Then
             assertThat(exception.getMessage()).isEqualTo("Away team name must not be null or empty");
+        }
+
+        @Test
+        @DisplayName("Given a list of matches, when matches finished, then all matches should be deleted from the board")
+        void givenListMatches_whenMatchesFinished_thenMatchesDeletedFromTheBoard() throws InterruptedException {
+            // Given
+            final String homeTeam = "Mexico";
+            final String awayTeam = "Brazil";
+            int numberOfMatches = 100;
+            int uniqIndex = 100000;
+            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                CountDownLatch latch = new CountDownLatch(numberOfMatches);
+                IntStream.range(1, numberOfMatches + 1).forEach(index -> executor.submit(() -> {
+                    try {
+                        worldCupScoreBoard.startMatch(homeTeam + index, awayTeam + (index * uniqIndex));
+                    } catch (ScoreBoardException e) {
+                        Assertions.fail("Start match failed: %s", e.getMessage());
+                    } finally {
+                        latch.countDown();
+                    }
+                }));
+                latch.await();
+            }
+
+            // When
+            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                final CountDownLatch latch = new CountDownLatch(numberOfMatches);
+                IntStream.range(1, numberOfMatches + 1).forEach(index -> {
+                    final String homeTeamName = homeTeam + index;
+                    final String awayTeamName = awayTeam + (index * uniqIndex);
+                    executor.submit(() -> {
+                        try {
+                            worldCupScoreBoard.finishMatch(homeTeamName, awayTeamName);
+                        } catch (ScoreBoardException e) {
+                            Assertions.fail("Finish match failed: %s", e.getMessage());
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                });
+                latch.await();
+            }
+
+            // Then
+            assertThat(worldCupScoreBoard.getSummaryMatches()).isEmpty();
         }
     }
 
