@@ -19,8 +19,9 @@ public class MatchComparator implements Comparator<Match> {
      */
     @Override
     public int compare(Match m1, Match m2) {
-        // if both matches have the same homeTeam and awayTeam they are identical
-        if (m1.awayTeam().equals(m2.awayTeam()) && m1.homeTeam().equals(m2.homeTeam())) {
+        // if both matches have the same homeTeam or awayTeam they are identical
+        if (m1.awayTeam().equals(m2.awayTeam()) || m1.homeTeam().equals(m2.homeTeam())
+                || m1.homeTeam().equals(m2.awayTeam()) || m1.awayTeam().equals(m2.homeTeam())) {
             return 0;
         }
 

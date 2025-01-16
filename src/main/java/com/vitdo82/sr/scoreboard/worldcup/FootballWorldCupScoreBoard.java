@@ -34,7 +34,7 @@ public class FootballWorldCupScoreBoard implements ScoreBoard {
         Match match = new Match(homeTeam, awayTeam);
 
         if (!matches.add(match)) {
-            throw new ScoreBoardException("Match already exists");
+            throw new ScoreBoardException("One or both teams are already participating in another match");
         }
     }
 

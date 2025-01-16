@@ -65,6 +65,17 @@ class FootballWorldCupScoreBoardTest {
         }
 
         @Test
+        @DisplayName("Given a match, when starting a new match with one of the same teams, then an error should state the match already exists")
+        void givenMatch_whenStartingDuplicateTeamMatch_thenErrorOccurs() throws ScoreBoardException {
+            // Given
+            worldCupScoreBoard.startMatch("Spain", "Brazil");
+            // When
+            ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch("Uruguay", "Spain"));
+            // Then
+            assertThat(exception.getMessage()).isEqualTo("One or both teams are already participating in another match");
+        }
+
+        @Test
         @DisplayName("Given a match, when starting the same match again, then an error should state the match already exists")
         void givenMatch_whenStartingDuplicateMatch_thenErrorOccurs() throws ScoreBoardException {
             // Given
@@ -74,7 +85,7 @@ class FootballWorldCupScoreBoardTest {
             // When
             ScoreBoardException exception = assertThrows(ScoreBoardException.class, () -> worldCupScoreBoard.startMatch(homeTeam, awayTeam));
             // Then
-            assertThat(exception.getMessage()).isEqualTo("Match already exists");
+            assertThat(exception.getMessage()).isEqualTo("One or both teams are already participating in another match");
         }
 
         @NullSource
